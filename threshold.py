@@ -3,7 +3,7 @@ import cv2
 
 def abs_sobel_thresh(image, orient='x', sobel_kernel=15, thresh=(0, 255)):
     # Convert to grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
     # Apply x or y gradient with the OpenCV Sobel() function
     # and take the absolute value
@@ -22,10 +22,10 @@ def abs_sobel_thresh(image, orient='x', sobel_kernel=15, thresh=(0, 255)):
     # Return the result
     return binary_output
 
-def mag_thresh(image, sobel_kernel=15, mag_thresh=(0, 255)):
+def mag_thresh(image, sobel_kernel=15, thresh=(0, 255)):
      # Convert to grayscale
     
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     # Take both Sobel x and y gradients
     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
     sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
@@ -47,7 +47,7 @@ def mag_thresh(image, sobel_kernel=15, mag_thresh=(0, 255)):
 
 def dir_threshold(image, sobel_kernel=9, thresh=(0, np.pi/2)):
     # Grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
     # Calculate the x and y gradients
     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
@@ -67,9 +67,9 @@ def dir_threshold(image, sobel_kernel=9, thresh=(0, np.pi/2)):
     return binary_output
 
 
-def col_thresh(img, thresh=(170, 255)):
+def col_thresh(image, thresh=(170, 255)):
     # HLS
-    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+    hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
     
     # Select S channel because it is usually the best performant
     # for this task. R channel also performs similarly.
