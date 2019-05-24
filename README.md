@@ -335,6 +335,7 @@ class ProcessImage:
         return out_img
 ```
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/KkXkgypdUak" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 <video width="640" height="360" controls>
   <source src="./project_video_solution.mp4" type="video/mp4">
