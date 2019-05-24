@@ -41,10 +41,6 @@ def mag_thresh(image, sobel_kernel=15, thresh=(0, 255)):
     # Return the binary image
     return binary_output
 
-
-    # Return the binary image
-    return binary_output
-
 def dir_threshold(image, sobel_kernel=9, thresh=(0, np.pi/2)):
     # Grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -63,16 +59,11 @@ def dir_threshold(image, sobel_kernel=9, thresh=(0, np.pi/2)):
     return binary_output
 
 
-    # Return the binary image
-    return binary_output
-
-
 def col_thresh(image, thresh=(170, 255)):
     # HLS
     hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
     
-    # Select S channel because it is usually the best performant
-    # for this task. R channel also performs similarly.
+    # Select S channel
     s_channel = hls[:,:,2] 
     
     binary_output = np.zeros_like(s_channel)

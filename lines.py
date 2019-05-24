@@ -16,7 +16,6 @@ def detect_lines(img, return_img=False):
         out_img = np.dstack((img, img, img))*255
     
     # Find the peak of the left and right halves of the histogram
-    # These will be the starting point for the left and right lines
     midpoint = np.int(histogram.shape[0]//2)
     leftx_base = np.argmax(histogram[:midpoint])
     rightx_base = np.argmax(histogram[midpoint:]) + midpoint
@@ -200,7 +199,7 @@ def curvature_radius (leftx, rightx, img_shape, xm_per_pix=3.7/800, ym_per_pix =
     left_fit_cr = np.polyfit(ploty*ym_per_pix, leftx*xm_per_pix, 2)
     right_fit_cr = np.polyfit(ploty*ym_per_pix, rightx*xm_per_pix, 2)
     
-    # Calculate the new radii of curvature
+    # Calculate the new radius of curvature
     left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
     right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
     
