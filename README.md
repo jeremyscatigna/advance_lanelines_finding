@@ -356,54 +356,6 @@ class ProcessImage:
 ```
 
 
-```python
-input_video = './project_video.mp4'
-output_video = './project_video_solution.mp4'
-
-clip1 = VideoFileClip(input_video)
-process_image = ProcessImage('./camera_cal/calibration*.jpg')
-
-white_clip = clip1.fl_image(process_image)
-
-%time white_clip.write_videofile(output_video, audio=False)
-```
-
-    t:   0%|          | 0/1260 [00:00<?, ?it/s, now=None]
-
-    Moviepy - Building video ./project_video_solution.mp4.
-    Moviepy - Writing video ./project_video_solution.mp4
-    
-
-
-                                                                    
-
-    Moviepy - Done !
-    Moviepy - video ready ./project_video_solution.mp4
-    CPU times: user 8min 45s, sys: 1min 14s, total: 9min 59s
-    Wall time: 5min 15s
-
-
-
-```python
-HTML("""
 <video width="640" height="360" controls>
-  <source src="{0}">
+  <source src="./project_video_solution.mp4" type="video/mp4">
 </video>
-""".format(output_video))
-```
-
-
-
-
-
-<video width="640" height="360" controls>
-  <source src="./project_video_solution.mp4">
-</video>
-
-
-
-
-
-```python
-
-```
