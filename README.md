@@ -349,3 +349,13 @@ And finally I have used all the above to create a Pipeline class that can be use
 
 [![Alt text](https://img.youtube.com/vi/KkXkgypdUak/0.jpg)](https://youtu.be/KkXkgypdUak)
 
+
+## Discussion
+
+- Improvement: 
+
+    - Smoothing:
+        Each time a new high-confidence measurement is calculated, it can be appended to the list of recent measurements and           then take an average over n past measurements to obtain the lane position to draw onto the image.
+- Likely to fail:
+    - White cars:
+        There is a possibility I think where the pipeline could if a white car is too close in front of us.
