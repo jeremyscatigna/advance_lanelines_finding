@@ -12,26 +12,6 @@ The goals / steps of this project are the following:
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
-
-```python
-import numpy as np
-import cv2
-import glob
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-from matplotlib.patches import Polygon
-import calibration
-import helpers
-import threshold
-import warp
-import lines
-import draw
-from moviepy.editor import VideoFileClip
-from IPython.display import HTML
-
-%matplotlib inline
-```
-
 ## Camera Calibration using chessboard images
 
 
