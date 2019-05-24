@@ -335,10 +335,7 @@ class ProcessImage:
         return out_img
 ```
 
+## Here is the youtube video of the project_video_solution.mp4 file
+
 [![Alt text](https://img.youtube.com/vi/KkXkgypdUak/0.jpg)](https://youtu.be/KkXkgypdUak)
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/KkXkgypdUak" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-<video width="640" height="360" controls>
-  <source src="./project_video_solution.mp4" type="video/mp4">
-</video>
