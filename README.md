@@ -20,10 +20,10 @@ The function is located in calibration.py.
 
 For each image path, calibrate_camera:
 
-reads the image by using the OpenCV cv2.imread function,
-converts it to grayscale usign cv2.cvtColor,
-find the chessboard corners usign cv2.findChessboardCorners
-Finally, the function uses all the chessboard corners to calibrate the camera by invoking cv2.calibrateCamera.
+    - reads the image by using the OpenCV cv2.imread function,
+    - converts it to grayscale usign cv2.cvtColor,
+    - find the chessboard corners usign cv2.findChessboardCorners
+    - Finally, the function uses all the chessboard corners to calibrate the camera by invoking cv2.calibrateCamera.
 
 Here is how I used my function:
 
@@ -54,11 +54,11 @@ helpers.plt_images(img, 'Source image', undistorted_img, 'Undistorted image')
 
 In order to create the final binary image I've create a treshold.py file containing needed funtions to calculate several gradient measurements (x, y, magnitude, direction and color).
 
-Calculate directional gradient: abs_sobel_thresh().
-Calculate gradient magnitude: mag_thresh().
-Calculate gradient direction: dir_threshold().
-Calculate color threshold: col_thresh().
-Then, combine_threshs() will be used to combine these thresholds, and produce the image which will be used to identify lane lines in later steps.
+    - Calculate directional gradient: abs_sobel_thresh().
+    - Calculate gradient magnitude: mag_thresh().
+    - Calculate gradient direction: dir_threshold().
+    - Calculate color threshold: col_thresh().
+    - Then, combine_threshs() will be used to combine these thresholds, and produce the image which will be used to identify        lane lines in later steps.
 
 Here is how I used these functions and their respective outputs: 
 
@@ -146,9 +146,10 @@ helpers.plt_images(image, 'Source image', combined, 'Combined thresholds')
 I've create a warp.py file containing needed funtions to apply a perspective transform to rectify binary image ("birds-eye view").
 The complete process I followed to  can be described like this: 
 
- - Select the coordinates corresponding to a trapezoid in the image.
- - Define the destination coordinates, or how that trapezoid would look from birds_eye view.
- - Use function cv2.getPerspectiveTransform to calculate both, the perpective transform M and the inverse perpective transform _Minv.
+    - Select the coordinates corresponding to a trapezoid in the image.
+    - Define the destination coordinates, or how that trapezoid would look from birds_eye view.
+    - Use function cv2.getPerspectiveTransform to calculate both, the perpective transform M and the inverse perpective transform _Minv.
+    
 M and Minv will then be used to warp and unwarp the video images.
 
 Here is how I used my function and the output:
@@ -227,9 +228,9 @@ The next step is to use Sliding Window technique to identify the most likely coo
 For that I've created lines.py file with the needed function.
 The process to detect the lines can be explained as follow:
 
- - The starting left and right lanes positions are selected by looking to the max value of the histogram to the left and the right of the histogram's mid position.
- - Sliding Window is used to identify the most likely coordinates of the lane lines in a window, which slides vertically through the image for both the left and right line.
- - Then usign the coordinates previously calculated, a second order polynomial is calculated for both the left and right lane line using Numpy's function np.polyfit.
+    - The starting left and right lanes positions are selected by looking to the max value of the histogram to the left and the right of the histogram's mid position.
+    - Sliding Window is used to identify the most likely coordinates of the lane lines in a window, which slides vertically through the image for both the left and right line.
+    - Then usign the coordinates previously calculated, a second order polynomial is calculated for both the left and right lane line using Numpy's function np.polyfit.
  
  
  Here is how I used the function and the output
