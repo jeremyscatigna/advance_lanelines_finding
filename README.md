@@ -1,19 +1,5 @@
-## Advanced Lane Finding
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
-![Lanes Image](./examples/example_output.jpg)
 
-In this project, your goal is to write a software pipeline to identify the lane boundaries in a video, but the main output or product we want you to create is a detailed writeup of the project.  Check out the [writeup template](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup.  
-
-Creating a great writeup:
----
-A great writeup should include the rubric points as well as your description of how you addressed each point.  You should include a detailed description of the code used in each step (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
-
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
-
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup.
-
-The Project
----
+## Advanced Lane Finding Project
 
 The goals / steps of this project are the following:
 
@@ -26,14 +12,398 @@ The goals / steps of this project are the following:
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
-The images for camera calibration are stored in the folder called `camera_cal`.  The images in `test_images` are for testing your pipeline on single frames.  If you want to extract more test images from the videos, you can simply use an image writing method like `cv2.imwrite()`, i.e., you can read the video in frame by frame as usual, and for frames you want to save for later you can write to an image file.  
 
-To help the reviewer examine your work, please save examples of the output from each stage of your pipeline in the folder called `output_images`, and include a description in your writeup for the project of what each image shows.    The video called `project_video.mp4` is the video your pipeline should work well on.  
+```python
+import numpy as np
+import cv2
+import glob
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from matplotlib.patches import Polygon
+import calibration
+import helpers
+import threshold
+import warp
+import lines
+import draw
+from moviepy.editor import VideoFileClip
+from IPython.display import HTML
 
-The `challenge_video.mp4` video is an extra (and optional) challenge for you if you want to test your pipeline under somewhat trickier conditions.  The `harder_challenge.mp4` video is another optional challenge and is brutal!
+%matplotlib inline
+```
 
-If you're feeling ambitious (again, totally optional though), don't stop there!  We encourage you to go out and take video of your own, calibrate your camera and show us how you would implement this project from scratch!
+## Camera Calibration using chessboard images
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
 
+```python
+images = glob.glob('./camera_cal/calibration*.jpg')
+```
+
+
+```python
+mtx, dist = calibration.camera_calibration(images, 6, 9)
+```
+
+## Undistorted chessboard Image
+
+
+```python
+img = cv2.imread('./camera_cal/calibration1.jpg')
+undistorted_img = cv2.undistort(img, mtx, dist, None, mtx)
+    
+helpers.plt_images(img, 'Source image', undistorted_img, 'Undistorted image')
+```
+
+
+![png](output_6_0.png)
+
+
+## Create a thresholded binary image
+
+
+```python
+image = cv2.imread('./test_images/test1.jpg')
+image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+image = cv2.undistort(image, mtx, dist, None, mtx)
+
+plt.imshow(image)
+```
+
+
+
+
+    <matplotlib.image.AxesImage at 0x102f994a8>
+
+
+
+
+![png](output_8_1.png)
+
+
+### 1- Directional gradient
+
+
+```python
+grad_x = threshold.abs_sobel_thresh(image, orient='x', thresh=(30, 100))
+helpers.plt_images(image, 'Source image', grad_x, 'Directional gradient')
+```
+
+
+![png](output_10_0.png)
+
+
+
+```python
+grad_y = threshold.abs_sobel_thresh(image, orient='y', thresh=(30, 100))
+helpers.plt_images(image, 'Source image', grad_y, 'Directional gradient')
+```
+
+
+![png](output_11_0.png)
+
+
+### 2- Gradient magnitude
+
+
+```python
+mag_binary = threshold.mag_thresh(image, sobel_kernel=3, thresh=(70, 100))
+helpers.plt_images(image, 'Source image', mag_binary, 'Gradient magnitude')
+```
+
+
+![png](output_13_0.png)
+
+
+### 3- Gradient direction
+
+
+```python
+dir_binary = threshold.dir_threshold(image, sobel_kernel=15, thresh=(0.7, 1.3))
+helpers.plt_images(image, 'Source image', dir_binary, 'Gradient direction')
+```
+
+
+![png](output_15_0.png)
+
+
+### 4- Color threshold
+
+
+```python
+col_binary = threshold.col_thresh(image, thresh=(170, 255))
+helpers.plt_images(image, 'Source image', col_binary, 'Gradient direction')
+```
+
+
+![png](output_17_0.png)
+
+
+### 5- Combined thresholds
+
+
+```python
+combined = threshold.combine_threshs(grad_x, grad_y, mag_binary, dir_binary, col_binary, ksize=15)
+helpers.plt_images(image, 'Source image', combined, 'Combined thresholds')
+```
+
+
+![png](output_19_0.png)
+
+
+## Apply a perspective transform to rectify binary image ("birds-eye view")
+
+
+```python
+src_coordinates = np.float32(
+    [[280,  700],  # Bottom left
+     [595,  460],  # Top left
+     [725,  460],  # Top right
+     [1125, 700]]) # Bottom right
+
+dst_coordinates = np.float32(
+    [[250,  720],  # Bottom left
+     [250,    0],  # Top left
+     [1065,   0],  # Top right
+     [1065, 720]]) # Bottom right 
+
+warped_img, _ , Minv  = warp.warp(image, src_coordinates, dst_coordinates)
+# Visualize undirstorsion
+f, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10))
+ax1.set_title('Undistorted image with source points drawn', fontsize=16)
+ax1.plot(Polygon(src_coordinates).get_xy()[:, 0], Polygon(src_coordinates).get_xy()[:, 1], color='red')
+ax1.imshow(image)
+
+ax2.set_title('Warped image with destination points drawn', fontsize=16)
+ax2.plot(Polygon(dst_coordinates).get_xy()[:, 0], Polygon(dst_coordinates).get_xy()[:, 1], color='red')
+ax2.imshow(warped_img)
+```
+
+
+
+
+    <matplotlib.image.AxesImage at 0x102e68470>
+
+
+
+
+![png](output_21_1.png)
+
+
+## Detect lane pixels and fit to find the lane boundary
+
+### Create Histogram
+
+
+```python
+# Run de function over the combined warped image
+combined_warped = warp.warp(combined)[0]
+histogram = helpers.get_histogram(combined_warped)
+
+# Plot the results
+plt.title('Histogram', fontsize=16)
+plt.xlabel('Pixel position')
+plt.ylabel('Counts')
+plt.plot(histogram)
+```
+
+
+
+
+    [<matplotlib.lines.Line2D at 0x102c0a5c0>]
+
+
+
+
+![png](output_24_1.png)
+
+
+### Detect Lines
+
+
+```python
+lines_fit, left_points, right_points, out_img = lines.detect_lines(combined_warped, return_img=True)
+helpers.plt_images(warped_img, 'Warped image', out_img, 'Lane lines detected')
+```
+
+
+![png](output_26_0.png)
+
+
+### Detect Similar Lines
+
+
+```python
+lines_fit, left_points, right_points, out_img = lines.detect_similar_lines(combined_warped, lines_fit, return_img=True)
+helpers.plt_images(warped_img, 'Warped image', out_img, 'Lane lines detected')
+
+```
+
+    Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers).
+
+
+
+![png](output_28_1.png)
+
+
+## Determine the curvature of the lane and vehicle position with respect to center
+
+### Calculate Curvature Radius
+
+
+```python
+curvature_rads = lines.curvature_radius(leftx=left_points[0], rightx=right_points[0], img_shape = img.shape)
+print('Left line curvature:', curvature_rads[0], 'm')
+print('Right line curvature:', curvature_rads[1], 'm')
+```
+
+    Left line curvature: 518.4476261684651 m
+    Right line curvature: 1558.810189537155 m
+
+
+### Calculate Car Offset
+
+
+```python
+offsetx = lines.car_offset(leftx=left_points[0], rightx=right_points[0], img_shape=img.shape)
+print ('Car offset from center:', offsetx, 'm.')
+```
+
+    Car offset from center: -0.0560041662700661 m.
+
+
+## Warp the detected lane boundaries back onto the original image
+
+### Draw Lane
+
+
+```python
+img_lane = draw.draw_lane(image, combined_warped, left_points, right_points, Minv)
+helpers.plt_images(image, 'Test image', img_lane, 'Lane detected')
+```
+
+
+![png](output_36_0.png)
+
+
+### Add Metrics
+
+
+```python
+out_img = draw.add_metrics(img_lane, leftx=left_points[0], rightx=right_points[0])
+helpers.plt_images(image, 'Test image', out_img, 'Lane detected with metrics')
+```
+
+
+![png](output_38_0.png)
+
+
+## Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position video
+
+
+```python
+class ProcessImage:
+    def __init__(self, images):
+        # Make a list of calibration images
+        images = glob.glob(images)
+
+        # Calibrate camera
+        self.mtx, self.dist = calibration.camera_calibration(images, 6, 9)
+        self.lines_fit = None
+
+    def __call__(self, img):
+        # Undistord image
+        img = cv2.undistort(img, mtx, dist, None, mtx)
+
+        # Calculate directional gradient
+        grad_binary = threshold.abs_sobel_thresh(img, orient='x', sobel_kernel=15, thresh=(30, 100))
+
+        # Calculate gradient magnitude 
+        mag_binary = threshold.mag_thresh(img, sobel_kernel=15, thresh=(50, 100))
+
+        # Calculate gradient direction
+        dir_binary = threshold.dir_threshold(img, sobel_kernel=15, thresh=(0.7, 1.3))
+
+        # Calculate color threshold
+        col_binary = threshold.col_thresh(img, thresh=(170, 255))
+
+        # Combine all the thresholds to identify the lane lines
+        combined = threshold.combine_threshs(grad_x, grad_y, mag_binary, dir_binary, col_binary, ksize=15)
+
+        # Apply a perspective transform to rectify binary image ("birds-eye view")
+        src_coordinates = np.float32(
+            [[280,  700],  # Bottom left
+             [595,  460],  # Top left
+             [725,  460],  # Top right
+             [1125, 700]]) # Bottom right
+
+        dst_coordinates = np.float32(
+            [[250,  720],  # Bottom left
+             [250,    0],  # Top left
+             [1065,   0],  # Top right
+             [1065, 720]]) # Bottom right   
+
+        combined_warped, _, Minv = warp.warp(combined, src_coordinates, dst_coordinates)
+                
+        self.lines_fit, left_points, right_points, out_img = lines.detect_similar_lines(combined_warped, self.lines_fit, return_img=True)
+
+        # Warp the detected lane boundaries back onto the original image.
+        img_lane = draw.draw_lane(img, combined_warped, left_points, right_points, Minv)
+            
+        # Add metrics to the output img
+        out_img = draw.add_metrics(img_lane, leftx=left_points[0], rightx=right_points[0])
+            
+        return out_img
+```
+
+
+```python
+input_video = './project_video.mp4'
+output_video = './project_video_solution.mp4'
+
+clip1 = VideoFileClip(input_video)
+process_image = ProcessImage('./camera_cal/calibration*.jpg')
+
+white_clip = clip1.fl_image(process_image)
+
+%time white_clip.write_videofile(output_video, audio=False)
+```
+
+    t:   0%|          | 0/1260 [00:00<?, ?it/s, now=None]
+
+    Moviepy - Building video ./project_video_solution.mp4.
+    Moviepy - Writing video ./project_video_solution.mp4
+    
+
+
+                                                                    
+
+    Moviepy - Done !
+    Moviepy - video ready ./project_video_solution.mp4
+    CPU times: user 8min 45s, sys: 1min 14s, total: 9min 59s
+    Wall time: 5min 15s
+
+
+
+```python
+HTML("""
+<video width="640" height="360" controls>
+  <source src="{0}">
+</video>
+""".format(output_video))
+```
+
+
+
+
+
+<video width="640" height="360" controls>
+  <source src="./project_video_solution.mp4">
+</video>
+
+
+
+
+
+```python
+
+```
