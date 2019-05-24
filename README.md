@@ -14,10 +14,18 @@ The goals / steps of this project are the following:
 
 ## Camera Calibration using chessboard images
 
+I have defined the camera_calibration function which takes as input parameters an array of paths to chessboards images, and the number of inside corners in the x and y axis.
 
-```python
-images = glob.glob('./camera_cal/calibration*.jpg')
-```
+The function is located in calibration.py.
+
+For each image path, calibrate_camera:
+
+reads the image by using the OpenCV cv2.imread function,
+converts it to grayscale usign cv2.cvtColor,
+find the chessboard corners usign cv2.findChessboardCorners
+Finally, the function uses all the chessboard corners to calibrate the camera by invoking cv2.calibrateCamera.
+
+Here is how I used my function:
 
 
 ```python
@@ -25,6 +33,10 @@ mtx, dist = calibration.camera_calibration(images, 6, 9)
 ```
 
 ## Undistorted chessboard Image
+
+I have then used the returned camera matrix and distortion coefficients from my camera_calibration function to perform a distortion correction on a chessboard image.
+
+Here is how I used it and output images:
 
 
 ```python
@@ -40,16 +52,15 @@ helpers.plt_images(img, 'Source image', undistorted_img, 'Undistorted image')
 
 ## Create a thresholded binary image
 
+In order to create the final binary image I've create a treshold.py file containing needed funtions to calculate several gradient measurements (x, y, magnitude, direction and color).
 
-```python
-image = cv2.imread('./test_images/test1.jpg')
-image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-image = cv2.undistort(image, mtx, dist, None, mtx)
+Calculate directional gradient: abs_sobel_thresh().
+Calculate gradient magnitude: mag_thresh().
+Calculate gradient direction: dir_threshold().
+Calculate color threshold: col_thresh().
+Then, combine_threshs() will be used to combine these thresholds, and produce the image which will be used to identify lane lines in later steps.
 
-plt.imshow(image)
-```
-
-
+Here is how I used these functions and their respective outputs: 
 
 
     <matplotlib.image.AxesImage at 0x102f994a8>
@@ -132,6 +143,15 @@ helpers.plt_images(image, 'Source image', combined, 'Combined thresholds')
 
 ## Apply a perspective transform to rectify binary image ("birds-eye view")
 
+I've create a warp.py file containing needed funtions to apply a perspective transform to rectify binary image ("birds-eye view").
+The complete process I followed to  can be described like this: 
+
+ - Select the coordinates corresponding to a trapezoid in the image.
+ - Define the destination coordinates, or how that trapezoid would look from birds_eye view.
+ - Use function cv2.getPerspectiveTransform to calculate both, the perpective transform M and the inverse perpective transform _Minv.
+M and Minv will then be used to warp and unwarp the video images.
+
+Here is how I used my function and the output:
 
 ```python
 src_coordinates = np.float32(
@@ -173,6 +193,10 @@ ax2.imshow(warped_img)
 
 ### Create Histogram
 
+I have then created an histogram of the lower half of the warped image.
+The function used can be find in the helpers.py file.
+
+Here is how I used it and the output:
 
 ```python
 # Run de function over the combined warped image
@@ -199,6 +223,17 @@ plt.plot(histogram)
 
 ### Detect Lines
 
+The next step is to use Sliding Window technique to identify the most likely coordinates of the lane lines in a window. 
+For that I've created lines.py file with the needed function.
+The process to detect the lines can be explained as follow:
+
+ - The starting left and right lanes positions are selected by looking to the max value of the histogram to the left and the right of the histogram's mid position.
+ - Sliding Window is used to identify the most likely coordinates of the lane lines in a window, which slides vertically through the image for both the left and right line.
+ - Then usign the coordinates previously calculated, a second order polynomial is calculated for both the left and right lane line using Numpy's function np.polyfit.
+ 
+ 
+ Here is how I used the function and the output
+
 
 ```python
 lines_fit, left_points, right_points, out_img = lines.detect_lines(combined_warped, return_img=True)
@@ -211,6 +246,9 @@ helpers.plt_images(warped_img, 'Warped image', out_img, 'Lane lines detected')
 
 ### Detect Similar Lines
 
+I have then create detect_similar_lines() that uses the previosly calculated line_fits to try to identify the lane lines in a consecutive image. 
+
+Here is how I used the function and the output:
 
 ```python
 lines_fit, left_points, right_points, out_img = lines.detect_similar_lines(combined_warped, lines_fit, return_img=True)
@@ -227,7 +265,18 @@ helpers.plt_images(warped_img, 'Warped image', out_img, 'Lane lines detected')
 
 ## Determine the curvature of the lane and vehicle position with respect to center
 
+I have then calculated the curvature radius and the car offset using two functions that can be find in the lines.py file
+
 ### Calculate Curvature Radius
+
+to calculate the curvature radius:
+    - Fit a second order polynomial to pixel positions in each fake lane line
+    - Define conversions in x and y from pixels space to meters
+    - Fit new polynomials to x,y in world space
+    - Calculate the new radius of curvature
+    - return the new radius of curvature in meters
+    
+ Here is how the function is used and the output:
 
 
 ```python
@@ -242,6 +291,8 @@ print('Right line curvature:', curvature_rads[1], 'm')
 
 ### Calculate Car Offset
 
+Here is how the car offset function is used and the output:
+
 
 ```python
 offsetx = lines.car_offset(leftx=left_points[0], rightx=right_points[0], img_shape=img.shape)
@@ -255,6 +306,13 @@ print ('Car offset from center:', offsetx, 'm.')
 
 ### Draw Lane
 
+Then I've drawn the lines onto the image. For this purpose I've created a file called draw.py
+
+    - Draw the lane lines onto the warped blank version of the image.
+    - Warped back to original image space using inverse perspective matrix (Minv).
+    
+Here is how I used the function and the output:
+
 
 ```python
 img_lane = draw.draw_lane(image, combined_warped, left_points, right_points, Minv)
@@ -266,6 +324,10 @@ helpers.plt_images(image, 'Test image', img_lane, 'Lane detected')
 
 
 ### Add Metrics
+
+I have then added metrics onto this image using the add_metrics function in draw.py
+
+Here is how the function is used and the output:
 
 
 ```python
@@ -279,61 +341,8 @@ helpers.plt_images(image, 'Test image', out_img, 'Lane detected with metrics')
 
 ## Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position video
 
+And finally I have used all the above to create a Pipeline class that can be used on a video. You can find the class in the notebook  where all the code is written: advance_line_finding.ipynb
 
-```python
-class ProcessImage:
-    def __init__(self, images):
-        # Make a list of calibration images
-        images = glob.glob(images)
-
-        # Calibrate camera
-        self.mtx, self.dist = calibration.camera_calibration(images, 6, 9)
-        self.lines_fit = None
-
-    def __call__(self, img):
-        # Undistord image
-        img = cv2.undistort(img, mtx, dist, None, mtx)
-
-        # Calculate directional gradient
-        grad_binary = threshold.abs_sobel_thresh(img, orient='x', sobel_kernel=15, thresh=(30, 100))
-
-        # Calculate gradient magnitude 
-        mag_binary = threshold.mag_thresh(img, sobel_kernel=15, thresh=(50, 100))
-
-        # Calculate gradient direction
-        dir_binary = threshold.dir_threshold(img, sobel_kernel=15, thresh=(0.7, 1.3))
-
-        # Calculate color threshold
-        col_binary = threshold.col_thresh(img, thresh=(170, 255))
-
-        # Combine all the thresholds to identify the lane lines
-        combined = threshold.combine_threshs(grad_x, grad_y, mag_binary, dir_binary, col_binary, ksize=15)
-
-        # Apply a perspective transform to rectify binary image ("birds-eye view")
-        src_coordinates = np.float32(
-            [[280,  700],  # Bottom left
-             [595,  460],  # Top left
-             [725,  460],  # Top right
-             [1125, 700]]) # Bottom right
-
-        dst_coordinates = np.float32(
-            [[250,  720],  # Bottom left
-             [250,    0],  # Top left
-             [1065,   0],  # Top right
-             [1065, 720]]) # Bottom right   
-
-        combined_warped, _, Minv = warp.warp(combined, src_coordinates, dst_coordinates)
-                
-        self.lines_fit, left_points, right_points, out_img = lines.detect_similar_lines(combined_warped, self.lines_fit, return_img=True)
-
-        # Warp the detected lane boundaries back onto the original image.
-        img_lane = draw.draw_lane(img, combined_warped, left_points, right_points, Minv)
-            
-        # Add metrics to the output img
-        out_img = draw.add_metrics(img_lane, leftx=left_points[0], rightx=right_points[0])
-            
-        return out_img
-```
 
 ## Here is the youtube video of the project_video_solution.mp4 file
 
